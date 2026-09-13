@@ -28,8 +28,11 @@ class OSXBluetooth(Bluetooth):
 
         lines = []
         for line in output:
-            # Possible issue: SPBluetoothDataType now returns 'State' instead
-            if 'Bluetooth Power' not in line and 'State' not in line:
+            parts = line.split()
+            # Bluetooth Power: On/Off (older) or State: On/Off (newer).
+            if 'Bluetooth Power' not in line and not (
+                    'State:' in line and parts and
+                    parts[-1] in ('On', 'Off')):
                 continue
             lines.append(line)
 
@@ -39,12 +42,8 @@ class OSXBluetooth(Bluetooth):
             environ['LANG'] = old_lang
 
         if output and len(lines) == 1:
-            try:
-                return lines[0].split()[2] # using Bluetooth Power: ON/OFF
-            except IndexError: # using State: ON/OFF
-                return lines[0].split()[1] 
-        else:
-            return None
+            return lines[0].split()[-1]
+        return None
 
 
 def instance():
